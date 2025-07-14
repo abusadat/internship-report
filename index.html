@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Secure PDF Viewer</title>
+  <style>
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background: #333;
+    }
+    #pdf-container {
+      height: 100vh;
+      overflow-y: scroll;
+      text-align: center;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
+    canvas {
+      margin: 10px auto;
+      display: block;
+      box-shadow: 0 0 5px rgba(0,0,0,0.5);
+    }
+  </style>
+</head>
+<body oncontextmenu="return false;">
+  <div id="pdf-container"></div>
+
+  <!-- Load PDF.js via CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+  <script>
+    const pdfUrl = 'yourfile.pdf';  // PDF must be in same directory or CORS enabled
+
+    const container = document.getElementById('pdf-container');
+
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    pdfjsLib.getDocument(pdfUrl).promise.then(pdf => {
+      for (let i = 1; i <= pdf.numPages; i++) {
+        pdf.getPage(i).then(page => {
+          const scale = 1.5;
+          const viewport = page.getViewport({ scale });
+
+          const canvas = document.createElement('canvas');
+          const context = canvas.getContext('2d');
+          canvas.height = viewport.height;
+          canvas.width = viewport.width;
+          container.appendChild(canvas);
+
+          const renderContext = {
+            canvasContext: context,
+            viewport: viewport
+          };
+
+          page.render(renderContext);
+        });
+      }
+    });
+
+    // Disable keyboard copy
+    document.addEventListener('keydown', function(e) {
+      if ((e.ctrlKey || e.metaKey) && ['c', 'p', 's'].includes(e.key.toLowerCase())) {
+        e.preventDefault();
+      }
+    });
+  </script>
+</body>
+</html>
